@@ -1,0 +1,208 @@
+@page "/catalog"
+@rendermode InteractiveServer
+@implements IDisposable
+@using MidtermProject.Models
+@using MidtermProject.Services
+@inject IMovieRouletteService RouletteService
+@inject IWatchlistService Watchlist
+
+<div class="mx-auto max-w-6xl px-6 pb-16 pt-4 md:pt-8">
+    <!-- Header -->
+    <div class="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <div>
+            <h1 class="text-4xl font-bold tracking-tight md:text-6xl">Movie Catalog</h1>
+            <p class="mt-2 text-ink/70">Search every title, or narrow it down by genre and platform.</p>
+        </div>
+        <div class="self-start rounded-full bg-lime px-4 py-1.5 text-sm font-bold md:self-auto">
+            Showing @FilteredMovies.Count() of @AllMovies.Count titles
+        </div>
+    </div>
+
+    <!-- Search and filters -->
+    <div class="mb-10 grid grid-cols-1 gap-4 rounded-[28px] bg-olive p-5 sm:grid-cols-3 md:p-6">
+        <input type="text"
+               @bind="searchQuery"
+               @bind:event="oninput"
+               aria-label="Search titles"
+               placeholder="Search title or synopsis"
+               class="input-pill" />
+
+        <select @bind="selectedGenre" aria-label="Genre" class="select-pill">
+            <option value="">All Genres</option>
+            <option value="Action">Action</option>
+            <option value="Comedy">Comedy</option>
+            <option value="Crime">Crime</option>
+            <option value="Drama">Drama</option>
+            <option value="Horror">Horror</option>
+            <option value="Musical">Musical</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Romance">Romance</option>
+            <option value="Sci-Fi">Sci-Fi</option>
+            <option value="Thriller">Thriller</option>
+        </select>
+
+        <select @bind="selectedPlatform" aria-label="Platform" class="select-pill">
+            <option value="">All Platforms</option>
+            <option value="Netflix">Netflix</option>
+            <option value="Prime Video">Prime Video</option>
+            <option value="HBO Max">HBO Max</option>
+        </select>
+    </div>
+
+    <!-- Movie grid -->
+    @if (!FilteredMovies.Any())
+    {
+        <div class="rounded-[28px] border-2 border-dashed border-ink/30 p-12 text-center">
+            <p class="font-bold">No movies match those filters</p>
+            <p class="mt-1 text-sm text-ink/70">Clear the filters to see the full catalog again.</p>
+            <button @onclick="ResetFilters" class="btn-pill mt-5 bg-rust px-6 py-2.5 text-sm text-ink">
+                Clear filters
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            @foreach (var movie in FilteredMovies)
+            {
+                <div class="group flex flex-col overflow-hidden rounded-3xl bg-white/50 ring-1 ring-ink/10 transition hover:ring-2 hover:ring-rust">
+                    <!-- Poster (opens detail modal) -->
+                    <button type="button"
+                            @onclick="() => OpenModal(movie)"
+                            aria-label="View details for @movie.Title"
+                            class="relative aspect-[2/3] w-full cursor-pointer overflow-hidden bg-ink/10 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-navy">
+                        <img src="@movie.PosterUrl"
+                             alt=""
+                             class="h-full w-full object-cover transition duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100" />
+                        <span class="absolute right-2 top-2 rounded-full bg-lime px-2.5 py-0.5 text-xs font-bold text-ink">
+                            @movie.ReleaseYear
+                        </span>
+                    </button>
+
+                    <!-- Details -->
+                    <div class="flex flex-1 flex-col justify-between gap-2 p-4">
+                        <div>
+                            <span class="text-xs font-bold text-navy">@movie.Genre</span>
+                            <h3 class="truncate text-base font-bold leading-tight" title="@movie.Title">
+                                @movie.Title
+                            </h3>
+                            <p class="mt-0.5 text-xs text-ink/70">
+                                @movie.GetDurationDisplay()
+                            </p>
+                        </div>
+
+                        <div class="flex items-center justify-between border-t border-ink/10 pt-2">
+                            <span class="text-xs text-ink/70">@movie.StreamingPlatform</span>
+                            <button @onclick="() => ToggleWatchlist(movie)"
+                                    title="@(Watchlist.Contains(movie.Id) ? "Remove from Watchlist" : "Add to Watchlist")"
+                                    aria-label="@(Watchlist.Contains(movie.Id) ? "Remove from Watchlist" : "Add to Watchlist")"
+                                    class="rounded-full px-1.5 text-xl leading-none transition focus-visible:outline-2 focus-visible:outline-navy @(Watchlist.Contains(movie.Id) ? "text-rust" : "text-ink hover:text-rust")">
+                                @(Watchlist.Contains(movie.Id) ? "♥" : "♡")
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- ================= Movie Detail Modal ================= -->
+@if (activeModalMovie != null)
+{
+    <div class="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-ink/70 p-4 backdrop-blur-sm motion-reduce:animate-none"
+         @onclick="CloseModal">
+        <div class="relative w-full max-w-xl overflow-hidden rounded-[28px] bg-cream"
+             role="dialog" aria-modal="true" aria-label="@activeModalMovie.Title"
+             @onclick:stopPropagation>
+            <button @onclick="CloseModal"
+                    aria-label="Close"
+                    class="btn-pill absolute right-4 top-4 z-10 size-9 bg-ink text-sm text-cream">
+                ✕
+            </button>
+
+            <div class="sm:flex">
+                <div class="aspect-[2/3] bg-ink/10 sm:aspect-auto sm:w-1/2">
+                    <img src="@activeModalMovie.PosterUrl" alt="@activeModalMovie.Title" class="h-full w-full object-cover" />
+                </div>
+                <div class="flex flex-col justify-between gap-6 p-6 sm:w-1/2">
+                    <div>
+                        <p class="flex flex-wrap gap-x-4 text-sm font-bold text-navy">
+                            <span>@activeModalMovie.Genre</span>
+                            <span>@activeModalMovie.ReleaseYear</span>
+                        </p>
+                        <h2 class="mt-1 text-3xl font-bold leading-tight tracking-tight">@activeModalMovie.Title</h2>
+                        <p class="mt-1 text-sm text-ink/70">@activeModalMovie.GetDurationDisplay(), on @activeModalMovie.StreamingPlatform</p>
+
+                        <p class="mt-4 text-sm leading-relaxed">
+                            @activeModalMovie.Synopsis
+                        </p>
+                    </div>
+
+                    <div class="border-t border-ink/10 pt-4">
+                        @if (Watchlist.Contains(activeModalMovie.Id))
+                        {
+                            <button @onclick="() => Watchlist.Remove(activeModalMovie.Id)"
+                                    class="btn-pill w-full border-2 border-ink py-2.5 text-sm text-ink hover:bg-ink hover:text-cream">
+                                Remove from Watchlist
+                            </button>
+                        }
+                        else
+                        {
+                            <button @onclick="() => Watchlist.Add(activeModalMovie)"
+                                    class="btn-pill w-full bg-rust py-2.5 text-sm text-ink">
+                                Add to Watchlist
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<MediaItem> AllMovies = Array.Empty<MediaItem>();
+    private string searchQuery = "";
+    private string selectedGenre = "";
+    private string selectedPlatform = "";
+
+    private MediaItem? activeModalMovie;
+
+    protected override void OnInitialized()
+    {
+        AllMovies = RouletteService.GetAll();
+        Watchlist.OnChange += StateHasChanged;
+    }
+
+    private IEnumerable<MediaItem> FilteredMovies => AllMovies.Where(m =>
+        (string.IsNullOrWhiteSpace(searchQuery) ||
+         m.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+         m.Synopsis.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrEmpty(selectedGenre) || m.Genre.Contains(selectedGenre, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrEmpty(selectedPlatform) || m.StreamingPlatform.Equals(selectedPlatform, StringComparison.OrdinalIgnoreCase))
+    );
+
+    private void ToggleWatchlist(MediaItem movie)
+    {
+        if (Watchlist.Contains(movie.Id))
+            Watchlist.Remove(movie.Id);
+        else
+            Watchlist.Add(movie);
+    }
+
+    private void OpenModal(MediaItem movie) => activeModalMovie = movie;
+    private void CloseModal() => activeModalMovie = null;
+
+    private void ResetFilters()
+    {
+        searchQuery = "";
+        selectedGenre = "";
+        selectedPlatform = "";
+    }
+
+    public void Dispose()
+    {
+        Watchlist.OnChange -= StateHasChanged;
+    }
+}

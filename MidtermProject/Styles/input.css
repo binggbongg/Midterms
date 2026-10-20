@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/* Helvetica World ships as Regular + Bold only, so the UI sticks to those two weights.
+   Drop your licensed files into wwwroot/fonts/ (names below), or change the url()s. */
+@font-face {
+  font-family: "Helvetica World";
+  src: local("Helvetica World"),
+       local("HelveticaWorld-Regular"),
+       url("/fonts/HelveticaWorld-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Helvetica World";
+  src: local("Helvetica World Bold"),
+       local("HelveticaWorld-Bold"),
+       url("/fonts/HelveticaWorld-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --color-ink: #171717;
+  --color-rust: #d76326;
+  --color-navy: #16275a;
+  --color-lime: #c4cb55;
+  --color-lilac: #927fbe;
+  --color-olive: #6b763e;
+  --color-cream: #efddcf;
+
+  --font-sans: "Helvetica World", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --animate-fade-in: fade-in 0.2s ease-out;
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-cream font-sans text-ink antialiased;
+  }
+}
+
+@layer components {
+  /* Pill button base: add a bg-* and text-* colour on the element. */
+  .btn-pill {
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-bold transition
+           hover:-translate-y-0.5 active:translate-y-0
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current
+           disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0
+           motion-reduce:transition-none motion-reduce:hover:translate-y-0;
+  }
+
+  /* Label that sits above a pill input on the olive card. */
+  .field-label {
+    @apply mb-2 block pl-1 text-lg text-cream;
+  }
+
+  /* Cream pill inputs and selects. */
+  .input-pill,
+  .select-pill {
+    @apply w-full rounded-full bg-cream px-5 py-3.5 text-base text-navy
+           placeholder:text-navy/60
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime;
+  }
+
+  .select-pill {
+    @apply cursor-pointer appearance-none pr-12;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%2316275a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1.25rem center;
+    background-size: 0.75rem;
+  }
+}

@@ -1,0 +1,78 @@
+@page "/watchlist"
+@rendermode InteractiveServer
+@implements IDisposable
+@using MidtermProject.Models
+@using MidtermProject.Services
+@inject IWatchlistService Watchlist
+
+<div class="mx-auto max-w-4xl px-6 pb-16 pt-4 md:pt-8">
+    <div class="mb-8 flex flex-wrap items-end justify-between gap-2">
+        <div>
+            <h1 class="text-4xl font-bold tracking-tight md:text-6xl">Your Watchlist</h1>
+            <p class="mt-2 text-ink/70">Titles you saved from the roulette.</p>
+        </div>
+        <span class="rounded-full bg-lilac px-4 py-1.5 text-sm font-bold">
+            @Watchlist.Count @(Watchlist.Count == 1 ? "title" : "titles")
+        </span>
+    </div>
+
+    @if (Watchlist.Count == 0)
+    {
+        <div class="rounded-[28px] border-2 border-dashed border-ink/30 p-12 text-center">
+            <p class="font-bold">Your watchlist is empty</p>
+            <p class="mt-1 text-sm text-ink/70">Spin the roulette and save what looks good.</p>
+            <a href="/" class="btn-pill mt-5 bg-rust px-6 py-2.5 text-sm text-ink">
+                Go spin
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            @foreach (var item in Watchlist.GetItems())
+            {
+                <div class="flex gap-4 rounded-3xl bg-white/50 p-4 ring-1 ring-ink/10 transition @(item.IsWatched ? "opacity-60" : "")">
+                    <img src="@item.Media.PosterUrl" alt="@item.Media.Title" class="h-28 w-20 flex-shrink-0 rounded-2xl bg-ink/10 object-cover" />
+
+                    <div class="flex flex-1 flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 text-xs font-bold text-navy">
+                                <span>@item.Media.Genre</span>
+                                <span>@item.Media.StreamingPlatform</span>
+                            </div>
+                            <h3 class="mt-1 text-lg font-bold leading-snug @(item.IsWatched ? "line-through" : "")">
+                                @item.Media.Title
+                            </h3>
+                            <p class="mt-0.5 text-sm text-ink/70">
+                                @item.Media.GetDurationDisplay()
+                            </p>
+                        </div>
+
+                        <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/10 pt-3">
+                            <button @onclick="() => Watchlist.ToggleWatched(item.Media.Id)"
+                                    class="btn-pill px-4 py-1.5 text-xs @(item.IsWatched ? "bg-olive text-cream" : "bg-lilac text-ink")">
+                                @(item.IsWatched ? "Watched" : "Mark watched")
+                            </button>
+                            <button @onclick="() => Watchlist.Remove(item.Media.Id)"
+                                    class="btn-pill border-2 border-rust px-4 py-1 text-xs text-ink hover:bg-rust">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Watchlist.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Watchlist.OnChange -= StateHasChanged;
+    }
+}

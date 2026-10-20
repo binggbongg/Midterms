@@ -1,0 +1,48 @@
+﻿@using MidtermProject.Services
+@implements IDisposable
+@inject IWatchlistService Watchlist
+
+<header class="w-full">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-4 px-6 py-6 md:px-16 md:py-8">
+        <a href="/" class="flex items-center gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink">
+            <img src="/images/cinespin-ticket.svg" alt="" class="h-9 w-auto md:h-11" />
+            <span class="text-3xl font-bold tracking-tight md:text-4xl">CineSpin</span>
+        </a>
+
+        <nav class="flex flex-wrap items-center gap-3" aria-label="Main">
+            <NavLink href="/" Match="NavLinkMatch.All"
+                     class="btn-pill bg-rust px-6 py-2.5 text-base text-ink md:px-7 md:py-3 md:text-lg"
+                     ActiveClass="ring-2 ring-ink ring-offset-2 ring-offset-cream">
+                Roulette
+            </NavLink>
+
+            <NavLink href="/catalog"
+                     class="btn-pill bg-navy px-6 py-2.5 text-base text-lime md:px-7 md:py-3 md:text-lg"
+                     ActiveClass="ring-2 ring-ink ring-offset-2 ring-offset-cream">
+                Browse Catalog
+            </NavLink>
+
+            <NavLink href="/watchlist"
+                     class="btn-pill bg-lilac px-6 py-2.5 text-base text-ink md:px-7 md:py-3 md:text-lg"
+                     ActiveClass="ring-2 ring-ink ring-offset-2 ring-offset-cream">
+                Watchlist
+                <span class="inline-flex min-w-6 items-center justify-center rounded-full bg-ink px-1.5 text-sm text-cream"
+                      aria-label="@Watchlist.Count saved">
+                    @Watchlist.Count
+                </span>
+            </NavLink>
+        </nav>
+    </div>
+</header>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Watchlist.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        Watchlist.OnChange -= StateHasChanged;
+    }
+}
