@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../Components";
 
 /* Helvetica World ships as Regular + Bold only, so the UI sticks to those two weights.
    Drop your licensed files into wwwroot/fonts/ (names below), or change the url()s. */
